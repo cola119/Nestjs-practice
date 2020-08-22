@@ -1,20 +1,21 @@
 import {
   Controller,
   Get,
-  Post,
   Param,
-  Body,
-  HttpException,
   HttpStatus,
   UseFilters,
   ParseIntPipe,
   UseGuards,
+  Post,
+  Body,
+  ConflictException,
+  InternalServerErrorException,
 } from '@nestjs/common';
-import { CreateCatDto } from './dto/create-cat.dto';
 import { CatsService } from './cats.service';
-import { Cat } from './interfaces/cat.interface';
 import { HttpExceptionFilter } from 'src/http-exception.filter';
 import { AuthGuard } from 'src/auth.guard';
+import { Cat } from './entity/cat.entity';
+import { CreateCatDto } from './dto/create-cat.dto';
 
 @UseFilters(HttpExceptionFilter)
 @UseGuards(AuthGuard)
@@ -23,7 +24,7 @@ export class CatsController {
   constructor(private catsService: CatsService) {}
 
   @Get()
-  fildAll(): Cat[] {
+  fildAll(): Promise<Cat[]> {
     return this.catsService.findAll();
   }
 
@@ -36,11 +37,22 @@ export class CatsController {
     id: number,
   ): string {
     console.log(id);
-    return 'hod';
+    return 'TODO';
   }
 
-  @Post()
-  create(@Body() createCatDto: CreateCatDto): void {
-    return this.catsService.create(createCatDto);
+  @Post('add')
+  async create(@Body() createCatDto: CreateCatDto): Promise<void> {
+    const name = createCatDto.name;
+    if (await this.catsService.findByName(name)) {
+      throw new ConflictException(`${name} is already exist.`);
+    }
+    try {
+      await this.catsService.create(createCatDto);
+    } catch (e) {
+      throw new InternalServerErrorException(e, 'Internal server error');
+    }
+    return;
   }
 }
+
+// curl -X POST -H "Content-Type: application/json" -d '{"name":"hello3", "age":"1", "aa": "aa"}' localhost:3000/cats/add
