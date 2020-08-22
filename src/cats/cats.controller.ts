@@ -1,8 +1,19 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  HttpException,
+  HttpStatus,
+  UseFilters,
+} from '@nestjs/common';
 import { CreateCatDto } from './dto/create-cat.dto';
 import { CatsService } from './cats.service';
 import { Cat } from './interfaces/cat.interface';
+import { HttpExceptionFilter } from 'src/http-exception.filter';
 
+@UseFilters(HttpExceptionFilter)
 @Controller('cats')
 export class CatsController {
   constructor(private catsService: CatsService) {}
@@ -15,7 +26,7 @@ export class CatsController {
   @Get(':id')
   findOne(@Param('id') id: string): string {
     console.log(id);
-    return `This action returns a #${id} cat`;
+    throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
   }
 
   @Post()
